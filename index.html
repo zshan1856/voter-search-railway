@@ -70,7 +70,7 @@
       position: fixed;
       bottom: 10px;
       left: 12px;
-      font-size: 12px; /* 🔥 increased */
+      font-size: 12px;
       font-style: italic;
       color: #5a0f0f;
       opacity: 0.7;
@@ -88,7 +88,6 @@
 
 <h2>Kausa Mumbra Voter Search</h2>
 
-<!-- ✅ PDF DOWNLOAD BUTTON -->
 <a href="https://drive.google.com/uc?export=download&id=1qwCIJ4ERVkUSm_k0-4hk-92eHRWSV5Tg" target="_blank">
   <button style="width:100%; margin-bottom:10px;">Download Full Voter List (PDF)</button>
 </a>
@@ -144,7 +143,6 @@ function highlight(text, q) {
 
 async function search() {
 
-    // ✅ RESET FILTERS ON NEW SEARCH
     document.getElementById("filterBox").style.display = "none";
     document.getElementById("filterBtn").style.display = "none";
     document.getElementById("houseFilter").value = "";
@@ -193,13 +191,17 @@ function render(data) {
         let name = highlight(r.name || "", surname);
         name = highlight(name, firstname);
 
+        let file = r.source_file || "";
+        let page = file.replace(".jpg", "");
+
         let div = document.createElement("div");
 
         div.innerHTML = `
             <div class="result">
                 <b>${name}</b><br>
                 Relative: ${r.relative_name || ""}<br>
-                House: ${r.house_no} | Age: ${r.age}
+                House: ${r.house_no} | Age: ${r.age}<br>
+                File: ${file} | Page: ${page}
             </div>
         `;
 
@@ -234,7 +236,6 @@ function clearFilter() {
     render(originalResults);
 }
 
-// 🔥 Hide footer on scroll
 window.addEventListener("scroll", function() {
     let tag = document.getElementById("footerTag");
     tag.classList.add("footer-hidden");
