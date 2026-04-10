@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont;
-      margin: 0;
-      background: #f7f7f7;
-    }
+    body { font-family: -apple-system; margin:0; background:#f7f7f7; }
 
     .header {
       position: sticky;
@@ -20,56 +16,51 @@
       z-index: 10;
     }
 
-    .container {
-      max-width: 700px;
-      margin: auto;
-      padding: 0 10px;
-    }
+    .container { max-width:700px; margin:auto; padding:0 10px; }
 
     input {
-      width: 100%;
-      padding: 12px;
-      margin: 6px 0;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      font-size: 16px;
+      width:100%;
+      padding:12px;
+      margin:6px 0;
+      border-radius:10px;
+      border:1px solid #ddd;
+      font-size:16px;
     }
 
     button {
-      padding: 12px;
-      margin-top: 6px;
-      cursor: pointer;
-      border-radius: 10px;
-      border: none;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
     }
 
-    .btn-row {
-      display: flex;
-      gap: 8px;
-    }
+    .btn-row { display:flex; gap:8px; }
+    .search-btn { background:black; color:white; flex:1; }
+    .cancel-btn { background:red; color:white; flex:1; }
+    .filter-btn { background:#1976d2; color:white; width:100%; }
 
-    .search-btn { background: black; color: white; flex: 1; }
-    .cancel-btn { background: red; color: white; flex: 1; }
-
-    .results {
-      padding: 10px;
-    }
+    .results { padding:10px; }
 
     .result {
-      background: white;
-      padding: 14px;
-      border-radius: 12px;
-      margin-bottom: 10px;
-      border: 1px solid #eee;
+      background:white;
+      padding:14px;
+      border-radius:12px;
+      margin-bottom:10px;
+      border:1px solid #eee;
+      line-height:1.5;
     }
 
-    .highlight {
-      background: #ffe082;
-    }
+    .highlight { background:#ffe082; }
 
-    #loader {
+    #loader { display:none; }
+
+    .filter-box {
       display:none;
-      font-size: 14px;
+      padding:10px;
+      background:#fafafa;
+      border:1px solid #ddd;
+      border-radius:10px;
+      margin-top:10px;
     }
 
     .footer-tag {
@@ -83,9 +74,7 @@
       transition: opacity 0.3s ease;
     }
 
-    .footer-hidden {
-      opacity: 0;
-    }
+    .footer-hidden { opacity:0; }
   </style>
 </head>
 
@@ -94,7 +83,7 @@
 <div class="header">
 <div class="container">
 
-<h2>Voter Search</h2>
+<h2>Kausa Mumbra Voter Search</h2>
 
 <input id="surname" placeholder="Surname">
 <input id="firstname" placeholder="First Name">
@@ -104,8 +93,21 @@
   <button class="cancel-btn" onclick="cancelSearch()">Cancel</button>
 </div>
 
+<button class="filter-btn" id="filterBtn" onclick="toggleFilter()" style="display:none;">
+  Filters
+</button>
+
 <p id="status"></p>
 <p id="loader">🔍 Searching...</p>
+
+<div class="filter-box" id="filterBox">
+  <input id="houseFilter" placeholder="House No">
+  <input id="ageFilter" placeholder="Age">
+  <div class="btn-row">
+    <button onclick="applyFilter()">Apply</button>
+    <button onclick="clearFilter()">Clear</button>
+  </div>
+</div>
 
 </div>
 </div>
@@ -118,71 +120,116 @@
 
 <script>
 
-const API_BASE = "voter-search.up.railway.app"; // 🔥 replace this
+const API_BASE = ""; // 🔥 EMPTY = same backend (Railway)
 
 let controller;
+let originalResults = [];
+let scrollTimeout;
+
+function escapeRegex(text) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 function highlight(text, q) {
     if (!q) return text;
-    return text.replace(new RegExp(q, "gi"), m => `<span class="highlight">${m}</span>`);
+    let regex = new RegExp(escapeRegex(q), "gi");
+    return text.replace(regex, m => `<span class="highlight">${m}</span>`);
 }
 
 async function search() {
 
+    document.getElementById("loader").style.display = "block";
+
     let surname = document.getElementById("surname").value.trim();
     let firstname = document.getElementById("firstname").value.trim();
 
-    let url = `https://voter-search.up.railway.app/search?surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}`;
+    controller = new AbortController();
 
-    console.log("Calling API:", url);
+    let url = `/search?surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}`;
 
     let res = await fetch(url);
     let data = await res.json();
 
-    console.log("API response:", data);
+    originalResults = data.results || [];
 
-    let resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML = "";
+    document.getElementById("status").innerText = `Found ${originalResults.length} results`;
 
-    if (!data.results || data.results.length === 0) {
-        resultsDiv.innerHTML = "<p>No results found</p>";
-        return;
+    if (originalResults.length > 0) {
+        document.getElementById("filterBtn").style.display = "block";
     }
 
-    data.results.forEach(r => {
-        let div = document.createElement("div");
-        div.className = "result";
+    render(originalResults);
 
-        div.innerHTML = `
-            <b>${r.name || ""}</b><br>
-            House: ${r.house_no || ""} | Age: ${r.age || ""}
-        `;
-
-        resultsDiv.appendChild(div);
-    });
+    document.getElementById("loader").style.display = "none";
 }
-  
+
 function cancelSearch() {
     if (controller) controller.abort();
 }
 
 function render(data) {
+
     let resultsDiv = document.getElementById("results");
     resultsDiv.innerHTML = "";
 
+    let surname = document.getElementById("surname").value.trim();
+    let firstname = document.getElementById("firstname").value.trim();
+
     data.forEach(r => {
+
+        let name = highlight(r.name || "", surname);
+        name = highlight(name, firstname);
+
         let div = document.createElement("div");
-        div.className = "result";
 
         div.innerHTML = `
-            <b>${r.name}</b><br>
-            House: ${r.house_no} | Age: ${r.age}
+            <div class="result">
+                <b>${name}</b><br>
+                Relative: ${r.relative_name || ""}<br>
+                House: ${r.house_no} | Age: ${r.age}
+            </div>
         `;
 
         resultsDiv.appendChild(div);
     });
 }
 
+function toggleFilter() {
+    let box = document.getElementById("filterBox");
+    box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+function applyFilter() {
+
+    let house = document.getElementById("houseFilter").value.trim();
+    let age = document.getElementById("ageFilter").value.trim();
+
+    let filtered = originalResults;
+
+    if (house) filtered = filtered.filter(r => r.house_no == house);
+    if (age) filtered = filtered.filter(r => r.age == age);
+
+    document.getElementById("status").innerText = `Filtered: ${filtered.length} results`;
+
+    render(filtered);
+}
+
+function clearFilter() {
+    document.getElementById("houseFilter").value = "";
+    document.getElementById("ageFilter").value = "";
+    document.getElementById("status").innerText = `Found ${originalResults.length} results`;
+    render(originalResults);
+}
+
+window.addEventListener("scroll", function() {
+    let tag = document.getElementById("footerTag");
+    tag.classList.add("footer-hidden");
+
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+        tag.classList.remove("footer-hidden");
+    }, 800);
+});
 </script>
 
 </body>
