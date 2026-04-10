@@ -132,25 +132,36 @@ async function search() {
     let surname = document.getElementById("surname").value.trim();
     let firstname = document.getElementById("firstname").value.trim();
 
-    document.getElementById("loader").style.display = "block";
+    let url = `https://voter-search.up.railway.app/search?surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}`;
 
-    controller = new AbortController();
+    console.log("Calling API:", url);
 
-    try {
-        let res = await fetch(`${API_BASE}/search?surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}`, {
-            signal: controller.signal
-        });
+    let res = await fetch(url);
+    let data = await res.json();
 
-        let data = await res.json();
+    console.log("API response:", data);
 
-        render(data.results || []);
-        document.getElementById("status").innerText = `Found ${data.results.length} results`;
+    let resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = "";
 
-    } catch (e) {}
+    if (!data.results || data.results.length === 0) {
+        resultsDiv.innerHTML = "<p>No results found</p>";
+        return;
+    }
 
-    document.getElementById("loader").style.display = "none";
+    data.results.forEach(r => {
+        let div = document.createElement("div");
+        div.className = "result";
+
+        div.innerHTML = `
+            <b>${r.name || ""}</b><br>
+            House: ${r.house_no || ""} | Age: ${r.age || ""}
+        `;
+
+        resultsDiv.appendChild(div);
+    });
 }
-
+  
 function cancelSearch() {
     if (controller) controller.abort();
 }
