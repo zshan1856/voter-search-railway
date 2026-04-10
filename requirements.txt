@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+requests
+indic-transliteration
+python-multipart

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voter Search</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont;
+      margin: 0;
+      background: #f7f7f7;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      background: white;
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      z-index: 10;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 0 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px;
+      margin-top: 6px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: none;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-btn { background: black; color: white; flex: 1; }
+    .cancel-btn { background: red; color: white; flex: 1; }
+
+    .results {
+      padding: 10px;
+    }
+
+    .result {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #eee;
+    }
+
+    .highlight {
+      background: #ffe082;
+    }
+
+    #loader {
+      display:none;
+      font-size: 14px;
+    }
+
+    .footer-tag {
+      position: fixed;
+      bottom: 8px;
+      left: 10px;
+      font-size: 10px;
+      font-style: italic;
+      color: #5a0f0f;
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+    }
+
+    .footer-hidden {
+      opacity: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">
+<div class="container">
+
+<h2>Voter Search</h2>
+
+<input id="surname" placeholder="Surname">
+<input id="firstname" placeholder="First Name">
+
+<div class="btn-row">
+  <button class="search-btn" onclick="search()">Search</button>
+  <button class="cancel-btn" onclick="cancelSearch()">Cancel</button>
+</div>
+
+<p id="status"></p>
+<p id="loader">🔍 Searching...</p>
+
+</div>
+</div>
+
+<div class="results container" id="results"></div>
+
+<div class="footer-tag" id="footerTag">
+  Developed by Zeeshan Hasan
+</div>
+
+<script>
+
+const API_BASE = "https://YOUR-RAILWAY-APP.up.railway.app"; // 🔥 replace this
+
+let controller;
+
+function highlight(text, q) {
+    if (!q) return text;
+    return text.replace(new RegExp(q, "gi"), m => `<span class="highlight">${m}</span>`);
+}
+
+async function search() {
+
+    let surname = document.getElementById("surname").value.trim();
+    let firstname = document.getElementById("firstname").value.trim();
+
+    document.getElementById("loader").style.display = "block";
+
+    controller = new AbortController();
+
+    try {
+        let res = await fetch(`${API_BASE}/search?surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}`, {
+            signal: controller.signal
+        });
+
+        let data = await res.json();
+
+        render(data.results || []);
+        document.getElementById("status").innerText = `Found ${data.results.length} results`;
+
+    } catch (e) {}
+
+    document.getElementById("loader").style.display = "none";
+}
+
+function cancelSearch() {
+    if (controller) controller.abort();
+}
+
+function render(data) {
+    let resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = "";
+
+    data.forEach(r => {
+        let div = document.createElement("div");
+        div.className = "result";
+
+        div.innerHTML = `
+            <b>${r.name}</b><br>
+            House: ${r.house_no} | Age: ${r.age}
+        `;
+
+        resultsDiv.appendChild(div);
+    });
+}
+
+</script>
+
+</body>
+</html>
