@@ -11,17 +11,19 @@
       position: sticky;
       top: 0;
       background: white;
-      padding: 12px;
+      padding: 14px 12px;
       border-bottom: 1px solid #eee;
       z-index: 10;
     }
 
-    .container { max-width:700px; margin:auto; padding:0 10px; }
+    .container { max-width:700px; margin:auto; padding:0 12px; }
+
+    h2 { margin-bottom: 10px; }
 
     input {
       width:100%;
       padding:12px;
-      margin:6px 0;
+      margin:8px 0;
       border-radius:10px;
       border:1px solid #ddd;
       font-size:16px;
@@ -32,45 +34,46 @@
       border:none;
       border-radius:10px;
       cursor:pointer;
+      font-size:14px;
     }
 
-    .btn-row { display:flex; gap:8px; }
+    .btn-row { display:flex; gap:10px; margin-top:6px; }
     .search-btn { background:black; color:white; flex:1; }
     .cancel-btn { background:red; color:white; flex:1; }
-    .filter-btn { background:#1976d2; color:white; width:100%; }
+    .filter-btn { background:#1976d2; color:white; width:100%; margin-top:10px; }
 
-    .results { padding:10px; }
+    .results { padding:12px; }
 
     .result {
       background:white;
-      padding:14px;
+      padding:16px;
       border-radius:12px;
-      margin-bottom:10px;
+      margin-bottom:12px;
       border:1px solid #eee;
-      line-height:1.5;
+      line-height:1.6;
     }
 
     .highlight { background:#ffe082; }
 
-    #loader { display:none; }
+    #loader { display:none; margin-top:6px; }
 
     .filter-box {
       display:none;
-      padding:10px;
+      padding:12px;
       background:#fafafa;
       border:1px solid #ddd;
       border-radius:10px;
-      margin-top:10px;
+      margin-top:12px;
     }
 
     .footer-tag {
       position: fixed;
-      bottom: 8px;
-      left: 10px;
-      font-size: 10px;
+      bottom: 10px;
+      left: 12px;
+      font-size: 12px; /* 🔥 increased */
       font-style: italic;
       color: #5a0f0f;
-      opacity: 0.6;
+      opacity: 0.7;
       transition: opacity 0.3s ease;
     }
 
@@ -84,6 +87,11 @@
 <div class="container">
 
 <h2>Kausa Mumbra Voter Search</h2>
+
+<!-- ✅ PDF DOWNLOAD BUTTON -->
+<a href="https://drive.google.com/uc?export=download&id=1qwCIJ4ERVkUSm_k0-4hk-92eHRWSV5Tg" target="_blank">
+  <button style="width:100%; margin-bottom:10px;">Download Full Voter List (PDF)</button>
+</a>
 
 <input id="surname" placeholder="Surname">
 <input id="firstname" placeholder="First Name">
@@ -120,8 +128,6 @@
 
 <script>
 
-const API_BASE = ""; // 🔥 EMPTY = same backend (Railway)
-
 let controller;
 let originalResults = [];
 let scrollTimeout;
@@ -137,6 +143,13 @@ function highlight(text, q) {
 }
 
 async function search() {
+
+    // ✅ RESET FILTERS ON NEW SEARCH
+    document.getElementById("filterBox").style.display = "none";
+    document.getElementById("filterBtn").style.display = "none";
+    document.getElementById("houseFilter").value = "";
+    document.getElementById("ageFilter").value = "";
+    document.getElementById("status").innerText = "";
 
     document.getElementById("loader").style.display = "block";
 
@@ -221,6 +234,7 @@ function clearFilter() {
     render(originalResults);
 }
 
+// 🔥 Hide footer on scroll
 window.addEventListener("scroll", function() {
     let tag = document.getElementById("footerTag");
     tag.classList.add("footer-hidden");
@@ -230,6 +244,7 @@ window.addEventListener("scroll", function() {
         tag.classList.remove("footer-hidden");
     }, 800);
 });
+
 </script>
 
 </body>
